@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ВЭД Интеллект</title>
+<style>
+/* Layout: оболочка приложения — тёмно-синяя боковая навигация, шапка-баннер, сетка карточек */
+:root{
+  --bg:#F2F5FA; --card:#FFFFFF; --card-2:#F6F8FC; --ink:#0F1E33; --muted:#66768C; --line:#E1E7F0;
+  --navy:#0B1F3A; --navy-2:#122C52; --on-navy:#E8EEF8; --on-navy-muted:#9DB0CC;
+  --accent:#1F5FE0; --accent-soft:#E6EEFE; --on-accent:#FFFFFF;
+  --ok:#1E9E5A; --ok-soft:#E3F5EA; --warn:#D9860B; --warn-soft:#FDF1DC; --crit:#D93A2B; --crit-soft:#FCE6E3;
+  --sea:#E4EEF8; --sea-2:#D3E3F3; --grid:#C9D8EA;
+  --c1:#22A06B; --c2:#F2A626; --c3:#1F5FE0; --c4:#8B5CF6; --c5:#F0612E; --c6:#7A8699;
+  --font:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0A1422; --card:#101D30; --card-2:#15253B; --ink:#E6EDF7; --muted:#8C9DB5; --line:#1F3049;
+  --navy:#07111F; --navy-2:#0F2340; --on-navy:#E6EDF7; --on-navy-muted:#8296B3;
+  --accent:#5B8DF5; --accent-soft:#1A2D52; --on-accent:#06101F;
+  --ok:#4CC789; --ok-soft:#123323; --warn:#F0B04A; --warn-soft:#3A2A10; --crit:#F2766A; --crit-soft:#3D1C19;
+  --sea:#13253C; --sea-2:#183050; --grid:#21395A;
+  --c1:#4CC789; --c2:#F0B04A; --c3:#5B8DF5; --c4:#A88BFA; --c5:#F2845A; --c6:#93A1B5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1422; --card:#101D30; --card-2:#15253B; --ink:#E6EDF7; --muted:#8C9DB5; --line:#1F3049;
+  --navy:#07111F; --navy-2:#0F2340; --on-navy:#E6EDF7; --on-navy-muted:#8296B3;
+  --accent:#5B8DF5; --accent-soft:#1A2D52; --on-accent:#06101F;
+  --ok:#4CC789; --ok-soft:#123323; --warn:#F0B04A; --warn-soft:#3A2A10; --crit:#F2766A; --crit-soft:#3D1C19;
+  --sea:#13253C; --sea-2:#183050; --grid:#21395A;
+  --c1:#4CC789; --c2:#F0B04A; --c3:#5B8DF5; --c4:#A88BFA; --c5:#F2845A; --c6:#93A1B5; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14.5px;line-height:1.5;font-variant-numeric:tabular-nums;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.app{grid-template-columns:minmax(0,1fr)}}
+
+/* banner */
+.banner{grid-column:1/-1;background:var(--navy);color:var(--on-navy);border-radius:16px;padding:18px 22px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;position:relative;overflow:hidden;
+  background-image:radial-gradient(120% 140% at 85% 0%,var(--navy-2) 0%,transparent 60%),radial-gradient(60% 90% at 100% 100%,rgba(91,141,245,.22),transparent 70%)}
+.banner::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(170deg,transparent 0 22px,rgba(255,255,255,.03) 22px 23px);pointer-events:none}
+.logo{display:flex;align-items:center;gap:12px;position:relative}
+.logo svg{flex:none}
+.logo h1{font-size:24px;font-weight:800;letter-spacing:-.01em}
+.banner .tag{border-left:1px solid rgba(255,255,255,.2);padding-left:18px;font-weight:600;font-size:15px;max-width:30ch;position:relative}
+.banner .sp{flex:1}
+.banner .motto{font-size:13.5px;color:var(--on-navy-muted);text-align:right;position:relative}
+.testbadge{position:relative;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px dashed var(--c2);color:var(--c2);padding:3px 8px;border-radius:5px}
+
+/* nav */
+.nav{background:var(--navy);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:max(16px,env(safe-area-inset-top,0px))}
+.nav button{display:flex;align-items:center;gap:12px;border:0;background:transparent;color:var(--on-navy);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;text-align:left;white-space:nowrap}
+.nav button:hover{background:rgba(255,255,255,.07)}
+.nav button[aria-current="page"]{background:var(--accent);color:#fff}
+.nav svg{width:20px;height:20px;flex:none}
+.nav .sep{height:1px;background:rgba(255,255,255,.1);margin:8px 4px}
+.nav .sel{padding:6px 8px 4px;font-size:11.5px;color:var(--on-navy-muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.nav select{margin:0 4px 6px;background:var(--navy-2);color:var(--on-navy);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 8px;max-width:100%}
+@media (max-width:900px){.nav{position:static;flex-direction:row;overflow-x:auto;padding:8px}.nav .sep,.nav .sel{display:none}.nav select{margin:0 4px;min-width:160px}}
+
+.page{display:flex;flex-direction:column;gap:16px;min-width:0}
+.grid{display:grid;gap:16px}
+.g-3{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.g-eq3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:1150px){.g-eq3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.g-3,.g-eq3,.g-2{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.lead{color:var(--muted);font-size:13.5px;margin:0;max-width:75ch}
+.ph{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.ph h2{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.link{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;font-size:13.5px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.sm{padding:4px 10px;font-size:12.5px;border-radius:8px}
+.btn.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.crit{background:var(--crit-soft);color:var(--crit)} .pill.na{background:var(--card-2);color:var(--muted)} .pill.acc{background:var(--accent-soft);color:var(--accent)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.notice{font-size:13px;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 14px}
+.notice b{color:var(--ink)}
+
+/* kv */
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px 18px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:600}
+
+/* map */
+.map{border-radius:12px;overflow:hidden;background:var(--sea)}
+.map svg{display:block;width:100%;height:auto}
+.mlabel{font:700 12px var(--font);fill:var(--ink)}
+.mlabel-s{font:600 10.5px var(--font);fill:var(--muted)}
+
+/* donut */
+.donut{display:grid;grid-template-columns:124px minmax(0,1fr);gap:14px;align-items:center}
+.donut svg{width:124px;height:124px}
+@media (max-width:420px){.donut{grid-template-columns:minmax(0,1fr)}}
+.legend-list{display:flex;flex-direction:column;gap:7px;font-size:13px;min-width:0}
+.legend-list div{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
+
+/* threats */
+.threats{display:flex;flex-direction:column;gap:12px}
+.threat{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px}
+.threat .n{font-weight:600}
+.threat .s{font-size:12.5px;color:var(--muted)}
+.checks{display:flex;flex-direction:column;gap:9px;margin:0;padding:0;list-style:none}
+.checks li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px}
+
+/* tables */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+thead th{font-size:12px;color:var(--muted);font-weight:700;background:var(--card-2)}
+td.r,th.r{text-align:right;white-space:nowrap}
+tr.total td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--card-2)}
+.sub{font-size:12px;color:var(--muted);font-weight:500}
+
+/* stepper */
+.stepper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;position:relative}
+.step{display:flex;flex-direction:column;gap:4px;font-size:12.5px;position:relative;padding-top:22px;min-width:0}
+.step::before{content:"";position:absolute;top:6px;left:0;right:0;height:2px;background:var(--line)}
+.step.done::before,.step.cur::before{background:var(--accent)}
+.step i{position:absolute;top:0;left:0;width:14px;height:14px;border-radius:50%;background:var(--card);border:2px solid var(--line)}
+.step.done i{background:var(--accent);border-color:var(--accent)}
+.step.cur i{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.step b{font-weight:700;overflow-wrap:anywhere} .step span{color:var(--muted)}
+
+/* checklist */
+.crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:11px 0;border-top:1px solid var(--line);align-items:center}
+.crow:first-child{border-top:0;padding-top:0}
+.crow .t{font-weight:600} .crow .n{font-size:12.5px;color:var(--muted)}
+.crow .meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;margin-top:4px;align-items:center}
+@media (max-width:560px){.crow{grid-template-columns:minmax(0,1fr)}}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:5px 10px;font-size:12.5px;cursor:pointer;border-left:1px solid var(--line);font-weight:600;color:var(--muted)}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"].v-done{background:var(--ok-soft);color:var(--ok)}
+.seg button[aria-pressed="true"].v-work{background:var(--warn-soft);color:var(--warn)}
+.seg button[aria-pressed="true"].v-none{background:var(--crit-soft);color:var(--crit)}
+
+/* plan */
+.plan{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.plan li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px}
+.plan .no{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:12.5px}
+.plan li.applied{background:var(--ok-soft);border-color:transparent}
+.plan li.applied .no{background:var(--ok);color:var(--card)}
+@media (max-width:560px){.plan li{grid-template-columns:26px minmax(0,1fr)}.plan li>:last-child{grid-column:2}}
+
+/* scenarios */
+.opt{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) auto;gap:8px 16px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px}
+.opt.best{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+@media (max-width:760px){.opt{grid-template-columns:minmax(0,1fr)}}
+.opt .on{font-weight:700} .opt .od{font-size:12.5px;color:var(--muted)}
+.opt .param{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.opt .param input{width:120px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card-2)}
+.bar{height:22px;display:flex;border-radius:5px;overflow:hidden;background:var(--card-2)}
+.bar .c{background:var(--accent)} .bar .x{background:repeating-linear-gradient(135deg,var(--crit) 0 2px,var(--crit-soft) 2px 7px)}
+.opt .ov{text-align:right;min-width:150px}
+.opt .ov .big{font-weight:800;font-size:16px}
+.opt .ov .sm{font-size:12px;color:var(--muted)}
+@media (max-width:760px){.opt .ov{text-align:left}}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.kpi .k{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:24px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .h{font-size:12px;color:var(--muted)}
+.kpi.hero{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.kpi.hero .k,.kpi.hero .h{color:var(--on-accent);opacity:.85}
+
+/* hbars */
+.hb{display:flex;flex-direction:column;gap:10px}
+.hb div.r{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) 110px;gap:10px;align-items:center;font-size:13px}
+.hb .track{height:14px;background:var(--card-2);border-radius:4px;overflow:hidden}
+.hb .fill{height:100%;border-radius:4px}
+@media (max-width:560px){.hb div.r{grid-template-columns:minmax(0,1fr) 100px}.hb .track{grid-column:1/-1;grid-row:2}}
+
+/* forms */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:12.5px;color:var(--muted);font-weight:600}
+.field input,.field select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card-2);width:100%}
+.field .hint{font-size:11.5px;color:var(--muted)}
+.gt{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--accent)}
+
+/* matrix */
+.mx td,.mx th{text-align:center}
+.mx td:first-child,.mx th:first-child{text-align:left}
+.mx th.us,.mx td.us{background:var(--accent-soft)}
+.mx thead th.us{background:var(--accent);color:var(--on-accent)}
+.mk{display:inline-block;width:20px;height:20px;vertical-align:middle}
+.vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.vendor{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--card)}
+.vendor h4{font-size:15px;font-weight:800}
+.vendor ul{margin:0;padding-left:18px;font-size:12.5px}
+.vendor .gap{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.flow div{background:var(--card-2);border-radius:12px;padding:12px;font-size:13px}
+.flow b{display:block;font-size:14px;margin-bottom:4px}
+.flow div.hl{background:var(--navy);color:var(--on-navy)}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+.report{white-space:pre-wrap;font-size:13px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:14px;max-height:420px;overflow:auto;margin:0;font-family:var(--font)}
+.doclist{display:flex;flex-direction:column;gap:10px}
+.doc{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center}
+.doc .ic{width:36px;height:36px;border-radius:9px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;z-index:20;font-weight:600}
+.events{display:flex;flex-direction:column;gap:0;margin:0;padding:0;list-style:none}
+.events li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;padding-bottom:12px;position:relative}
+.events li::before{content:"";position:absolute;left:6px;top:14px;bottom:0;width:2px;background:var(--line)}
+.events li:last-child::before{display:none}
+.events i{width:14px;height:14px;border-radius:50%;background:var(--accent);margin-top:3px;box-shadow:0 0 0 3px var(--accent-soft)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Mobile-first improvements */
+@media(max-width:760px){
+ body{padding:8px 8px 24px;font-size:14px;overflow-x:hidden}
+ .app{gap:9px;display:flex;flex-direction:column;max-width:100%}
+ .banner{width:100%;padding:14px;border-radius:12px;gap:8px}
+ .logo h1{font-size:20px}.logo svg{width:34px;height:34px}
+ .banner .tag{border:0;padding:0;font-size:12px;max-width:100%}
+ .banner .motto{display:none}.banner .sp{display:none}
+ .nav{width:100%;position:sticky;top:0;z-index:20;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;border-radius:10px;padding:5px;gap:2px;scrollbar-width:thin}
+ .nav button{padding:10px 11px;min-height:44px;gap:5px;font-size:12px;flex-shrink:0}
+ .nav svg{width:16px;height:16px}
+ .nav select{min-width:170px;max-width:200px}
+ .page{width:100%;min-width:0;gap:10px}
+ .card{min-width:0;max-width:100%;overflow-wrap:anywhere;padding:14px}
+ .ph{flex-wrap:wrap;gap:10px}.ph h2{font-size:22px}
+ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .kpi .v{font-size:clamp(18px,5vw,27px)}
+ .row{flex-wrap:wrap}.btn{min-height:44px}
+ .grid,.g-3,.g-2,.g-eq3,.opt,.flow{grid-template-columns:minmax(0,1fr)}
+ table{font-size:12px} .table-wrap,.tbl-wrap{max-width:100%;overflow-x:auto}
+ input,select,textarea{max-width:100%;font-size:16px}
+ .case-grid{grid-template-columns:1fr!important}
+}
+.case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.case-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--card);min-width:0}
+.case-card h3{margin:6px 0 8px}.case-card p{margin:6px 0;color:var(--muted)}
+.case-sum{font-size:24px;font-weight:800;color:var(--ink);margin:10px 0}
+.case-note{padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card-2);margin-bottom:14px}
+.case-card a,.case-note a{overflow-wrap:anywhere}
+.qr-section{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.qr-section img{width:160px;height:160px;background:#fff;padding:9px;border-radius:12px}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="banner">
+    <div class="logo">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true"><rect x="1" y="1" width="42" height="42" rx="12" stroke="#5B8DF5" stroke-width="2"/><path d="M12 28l7-9 6 5 7-11" stroke="#8FB3FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="28" r="2.6" fill="#E8EEF8"/><circle cx="19" cy="19" r="2.6" fill="#E8EEF8"/><circle cx="25" cy="24" r="2.6" fill="#E8EEF8"/><circle cx="32" cy="13" r="2.6" fill="#F2A626"/></svg>
+      <h1>ВЭД Интеллект</h1>
+    </div>
+    <div class="tag">Платформа оценки стоимости срыва внешнеторговых поставок</div>
+    <span class="testbadge">Прототип · модельные расчёты</span>
+    <div class="sp"></div>
+    <div class="motto">Сколько стоит срыв, насколько он вероятен<br>и что сделать, пока ещё можно повлиять</div>
+  </header>
+  <nav class="nav" id="nav" aria-label="Разделы"></nav>
+  <main class="page" id="page"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<section class="qr-print" hidden><img alt="QR" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAAC7klEQVR4nO2cQY6cMBBFf8VIvTRSDtBHMTfIkXKm3MA+yhwgEl4igX4WLhvoLKLRZJoeKC8s5Oapjaguqn4VLcS7R/r2fgYwyCCDDDLIIIPOCYmODkDuINIDQBZZpzKGQ7Zn0POhQJIc23IWATyJdCcBOJIk99DztmfQ86GsDkAGLMUYZMgddAKgHuSg7Rl0IORnkG8dkHoAYfy8bzLoS0CpB0TukzBiEaRy9BnfZNBLQvVJ4AkgAwAckYYOEghIiCjRw1bJevFrMug/QElESoYR3jrIz9ERyDX1GLCUVOOo7Rn0bB+xk7IXITDplHoHPpzw6tdk0EcglKxSA0i3SUEZ/ayR5eZTkowvfk0GfQTCVmfws06hrpGcQY4AIxyLbmEWcWaoWoTXGw91BTMAT5KjKwoVwqgnm0WcGmoWQSKw+YgRqmNGPwOA2wiXZhGnhvRnX5wCnJpAKM8Kpz6imYpZxPmhFllqkIAwOm4kKY0s65PE4ojTQ/VnD5S7z+ibWdQjtCTEfMT5oZZr1ESihJJ7Y4jlVIsjrgA1H+HKtF1bzcJr6mFPjfNDez2iHq16RASaHgGLIy4A/aVHFH3SzyWiWP2G6RGXgsi3DjL41TO0SpeftL6V+sO2Z9Ax2edGgFhjBloccVHITwL4SWQomuUijFlEe2fyjYzZuuquALW77Ajk7wRyDyL3kBAJIN8I+N8CLZM/d3sGHQZlERn8pG0zgCYXIvdtXUOGg7Zn0DFQvqkKke4zRPpFSkvVkEUQ2Douv9I1GfTewf2oy1rfUplqV/qwyPIC0PpOV5WkFtEQorzT1QHAYj7iAlDNPlumWQrhbYrARsI0H3EdKLeXOvONMpTU46bPiiQiqmMetD2DDoaStNTjPukboCXGfIntGfSJUPe4kO5z68V3RPrhKOGX7Fr0X/yaDPoI9BhHMPoZj80yaxeNVbpOD+2q4Zs657bjspY9rc/yCpDw3+c8DvtnMoMMMsgggwwyCAD+APZkeFhaSglWAAAAAElFTkSuQmCC"></section>
+
+<script>
+(function(){
+/* ============ утилиты ============ */
+const DAY=86400000;
+const today=(()=>{const d=new Date();d.setHours(0,0,0,0);return d})();
+const iso=d=>{const z=new Date(d);return z.getFullYear()+'-'+String(z.getMonth()+1).padStart(2,'0')+'-'+String(z.getDate()).padStart(2,'0')};
+const parse=s=>{const [y,m,d]=String(s||'').split('-').map(Number);const r=new Date(y,(m||1)-1,d||1);r.setHours(0,0,0,0);return isNaN(r)?new Date(today):r};
+const addDays=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
+const subWork=(d,n)=>{let r=new Date(d),k=0;while(k<n){r.setDate(r.getDate()-1);const w=r.getDay();if(w!==0&&w!==6)k++}return r};
+const diff=(a,b)=>Math.round((a-b)/DAY);
+const fdate=d=>d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+const rub=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
+const rs=n=>{const a=Math.abs(n),s=n<0?'−':'';if(a>=1e9)return s+(a/1e9).toLocaleString('ru-RU',{maximumFractionDigits:2})+' млрд ₽';if(a>=1e6)return s+(a/1e6).toLocaleString('ru-RU',{maximumFractionDigits:1})+' млн ₽';if(a>=1e3)return s+Math.round(a/1e3).toLocaleString('ru-RU')+' тыс. ₽';return s+Math.round(a)+' ₽'};
+const pct=p=>Math.round(p*100)+'%';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural=(n,a,b,c)=>{n=Math.abs(n)%100;const m=n%10;if(n>10&&n<20)return c;if(m>1&&m<5)return b;if(m===1)return a;return c};
+const dn=n=>n+' '+plural(n,'день','дня','дней');
+const uid=()=>Math.random().toString(36).slice(2,9);
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+/* ============ справочники ============ */
+const CATS={customs:'Таможенные',transport:'Транспортные',doc:'Документарные',fin:'Финансовые',route:'Маршрутные',time:'Временные'};
+const CATC={customs:'--c1',transport:'--c2',doc:'--c3',fin:'--c4',route:'--c5',time:'--c6'};
+const ICE=['Ice1','Ice2','Ice3','Arc4','Arc5','Arc6','Arc7','Arc8','Arc9'];
+const rank=c=>ICE.indexOf(c)+1;
+const COND={light:'Лёгкие',medium:'Средние',heavy:'Тяжёлые'};
+function iceRule(cls,cond){const r=rank(cls); // упрощённая демо-логика вместо таблиц критериев из Правил
+  if(cond==='light')return{compliant:r>=1,escort:r<4};
+  if(cond==='medium')return{compliant:r>=4,escort:r<6};
+  return{compliant:r>=6,escort:r<8};}
+const STAGES={smp:['Создание','Проверка документов','Допуск на СМП','В пути','Доставка'],regular:['Создание','Проверка','В пути','Таможня','Доставка']};
+const ITEMS=[
+  {key:'app',short:'заявление на разрешение',title:'Заявление на разрешение на плавание в акватории СМП',note:'Подаётся заранее, к нему прикладываются документы ниже',kind:'filing'},
+  {key:'insurance',short:'свидетельство о страховании',title:'Свидетельство о страховании гражданской ответственности за ущерб от загрязнения',note:'Без свидетельства плавание не допускается',kind:'filing'},
+  {key:'escort',short:'договор на ледокольную проводку',title:'Договор на ледокольную проводку (копия)',note:'Нужен, если проводка требуется по ледовому классу и условиям',kind:'filing',conditional:true},
+  {key:'permit',short:'разрешение на плавание',title:'Разрешение на плавание получено',note:'Без разрешения судно не может войти в акваторию',kind:'permit'},
+];
+const STATUS={done:'Есть',work:'В работе',none:'Нет'};
+const DEFAULT_A={delayDays:10,refuseShare:0.2,refuseDays:20,leadWorkDays:15,permitBuffer:3,urgentFactor:0.3,altP:0.05,
+  probs:{work:[0.10,0.30,0.55,0.85],none:[0.20,0.45,0.70,0.95]}};
+
+/* ============ демо-данные ============ */
+function seed(){
+  const d=n=>iso(addDays(today,n));
+  const ev=(n,t)=>({date:d(n),text:t});
+  return{page:'home',selected:null,A:clone(DEFAULT_A),voyages:[
+  {id:uid(),no:'СМП-0112-2026',type:'smp',name:'т/х «Полярный рассвет»',cargo:'Буровое оборудование',volume:'6 200 т',from:'Мурманск',to:'Певек',
+    start:d(-6),entry:d(30),end:d(44),iceClass:'Arc5',iceCond:'medium',cargoValue:820000000,stage:1,
+    items:{app:'work',insurance:'done',escort:'none',permit:'work'},
+    costs:{vesselDay:1450000,storageDay:180000,penaltyDay:900000,graceDays:5,replaceCost:38000000,extraLogistics:6500000,customs:0,lostProfit:24000000,capitalRate:18},
+    opt:{shiftDays:7,urgentCost:450000,altExtraDays:0,altExtraCost:0},
+    nodes:[['Мурманск',70,200],['Карские Ворота',185,160],['Диксон',300,128],['пр. Вилькицкого',405,72],['Тикси',515,110],['Певек',640,140]],pos:0,
+    risks:[
+      {id:uid(),name:'Тяжёлая ледовая обстановка в проливе Вилькицкого',cat:'route',smpOnly:true,p:0.25,direct:8700000,indirect:4200000,window:'окно прохода +10…+16 дней после входа',action:'Зарезервировать ледокольную проводку на окно прохода',actionCost:0,pAfter:0.10},
+      {id:uid(),name:'Задержка погрузки в порту Мурманск',cat:'transport',p:0.18,direct:4900000,indirect:1100000,window:'за 5–1 день до выхода',action:'Подтвердить слот причала и бригаду',actionCost:120000,pAfter:0.07},
+      {id:uid(),name:'Задержка оплаты покупателем при сдвиге сроков',cat:'fin',p:0.15,direct:0,indirect:3600000,window:'после поставки',action:'Согласовать с покупателем допуск по сроку',actionCost:0,pAfter:0.06}],
+    events:[ev(-6,'Поставка создана, загружены контракт и инвойс'),ev(-4,'Подтверждено страхование ответственности за загрязнение'),ev(-2,'Заявление на разрешение в работе')]},
+  {id:uid(),no:'СМП-0098-2026',type:'smp',name:'т/х «Ямальский ветер»',cargo:'Медный концентрат',volume:'42 000 т',from:'Сабетта',to:'Шанхай (транзит)',
+    start:d(-10),entry:d(50),end:d(78),iceClass:'Arc7',iceCond:'medium',cargoValue:3100000000,stage:1,
+    items:{app:'done',insurance:'work',escort:'none',permit:'work'},
+    costs:{vesselDay:2900000,storageDay:350000,penaltyDay:2500000,graceDays:7,replaceCost:95000000,extraLogistics:12000000,customs:0,lostProfit:60000000,capitalRate:18},
+    opt:{shiftDays:5,urgentCost:300000,altExtraDays:14,altExtraCost:62000000},
+    nodes:[['Сабетта',240,175],['пр. Вилькицкого',390,72],['Певек',545,112],['Берингов пр.',648,172],['Шанхай',610,258]],pos:0,
+    alt:[[240,175],[70,205],[40,262],[330,270],[610,258]],altLabel:'Южный маршрут через Суэц',
+    risks:[
+      {id:uid(),name:'Ледовая обстановка в Восточно-Сибирском море',cat:'route',smpOnly:true,p:0.15,direct:14500000,indirect:9000000,window:'окно прохода',action:'Согласовать резервное окно проводки',actionCost:0,pAfter:0.08},
+      {id:uid(),name:'Изменение условий оплаты из-за курса',cat:'fin',p:0.20,direct:0,indirect:18000000,window:'на дату расчёта',action:'Зафиксировать курс форвардом',actionCost:2100000,pAfter:0.05}],
+    events:[ev(-10,'Поставка создана'),ev(-7,'Заявление на разрешение подано')]},
+  {id:uid(),no:'СМП-0121-2026',type:'smp',name:'т/х «Кольская губа»',cargo:'Стройматериалы',volume:'3 800 т',from:'Архангельск',to:'Дудинка',
+    start:d(-2),entry:d(16),end:d(24),iceClass:'Arc4',iceCond:'medium',cargoValue:210000000,stage:0,
+    items:{app:'none',insurance:'work',escort:'none',permit:'none'},
+    costs:{vesselDay:980000,storageDay:95000,penaltyDay:400000,graceDays:3,replaceCost:21000000,extraLogistics:3200000,customs:0,lostProfit:9000000,capitalRate:18},
+    opt:{shiftDays:14,urgentCost:600000,altExtraDays:0,altExtraCost:0},
+    nodes:[['Архангельск',80,235],['Карские Ворота',185,160],['Диксон',300,128],['Дудинка',330,205]],pos:0,
+    risks:[{id:uid(),name:'Дефицит причальных мощностей в Дудинке',cat:'transport',p:0.2,direct:2900000,indirect:600000,window:'при прибытии',action:'Забронировать причал заранее',actionCost:80000,pAfter:0.08}],
+    events:[ev(-2,'Поставка создана, документы не загружены')]},
+  {id:uid(),no:'ES-2026-0047',type:'regular',name:'Электронные компоненты',cargo:'Электронные компоненты, ТН ВЭД 8542',volume:'2 × 40HC',from:'Шанхай',to:'Москва',
+    start:d(-9),end:d(16),cargoValue:25000000,stage:2,routeText:'Шанхай → Владивосток (море) → Москва (ж/д)',
+    costs:{vesselDay:45000,storageDay:18000,penaltyDay:120000,graceDays:3,replaceCost:0,extraLogistics:0,customs:0,lostProfit:0,capitalRate:18},
+    nodes:[['Шанхай',610,252],['Владивосток',652,168],['Иркутск',440,188],['Новосибирск',300,200],['Москва',80,212]],pos:1,
+    alt:[[610,252],[520,214],[300,200],[80,212]],altLabel:'Ж/д через Забайкальск',
+    scenarios:[{name:'Ж/д через Забайкальск',desc:'Без морского плеча и перевалки во Владивостоке',extraCost:180000,extraDays:-2,riskFactor:0.75},
+               {name:'Авиа для срочной части партии',desc:'Срочные позиции самолётом, остальное по текущему маршруту',extraCost:1400000,extraDays:-10,riskFactor:0.45}],
+    risks:[
+      {id:uid(),name:'Классификация товара по ТН ВЭД',cat:'customs',p:0.35,direct:1150000,indirect:480000,window:'при выпуске, через 10–12 дней',action:'Проверить классификацию у брокера, запросить предварительное решение',actionCost:60000,pAfter:0.10},
+      {id:uid(),name:'Задержка перевалки в порту Владивосток',cat:'transport',p:0.30,direct:315000,indirect:360000,window:'через 3–7 дней',action:'Забронировать вывоз с терминала заранее',actionCost:40000,pAfter:0.15},
+      {id:uid(),name:'Корректировка таможенной стоимости',cat:'customs',p:0.20,direct:900000,indirect:150000,window:'при декларировании',action:'Подготовить подтверждающие документы по цене',actionCost:25000,pAfter:0.08},
+      {id:uid(),name:'Дополнительные платежи перевозчику',cat:'fin',p:0.25,direct:280000,indirect:0,window:'по факту',action:'Зафиксировать ставки в заявке',actionCost:0,pAfter:0.10},
+      {id:uid(),name:'Срыв срока поставки покупателю',cat:'time',p:0.22,direct:0,indirect:960000,window:'к '+fdate(addDays(today,16)),action:'Согласовать с покупателем окно поставки',actionCost:0,pAfter:0.12}],
+    events:[ev(-9,'Поставка создана, загружены инвойс и контракт'),ev(-6,'Погрузка в Шанхае'),ev(-5,'Выход в море'),ev(-1,'Подход к Владивостоку')]}
+  ]};
+}
+
+const KEY='ved-intellekt-demo-v2';
+let S;try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
+if(!S||!Array.isArray(S.voyages))S=seed();
+S.A=Object.assign(clone(DEFAULT_A),S.A||{});
+if(!S.selected||!S.voyages.find(v=>v.id===S.selected))S.selected=S.voyages[0]?.id||null;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const cur=()=>S.voyages.find(v=>v.id===S.selected);
+
+/* ============ расчёт ============ */
+function pFor(status,slack,A){if(status==='done')return 0;const t=A.probs[status]||A.probs.none;
+  if(slack>=10)return t[0];if(slack>=3)return t[1];if(slack>=0)return t[2];return t[3];}
+const finDay=v=>v.cargoValue*(v.costs.capitalRate/100)/365;
+
+function smp(v,o={}){
+  const A=S.A,factor=o.factor??1,entry=addDays(parse(v.entry),o.shift||0),rule=iceRule(v.iceClass,v.iceCond);
+  const filingDL=subWork(entry,A.leadWorkDays),permitDL=addDays(entry,-A.permitBuffer);
+  const rows=ITEMS.map(it=>{const required=it.conditional?rule.escort:true;const status=required?(v.items[it.key]||'none'):'na';
+    const dl=it.kind==='permit'?permitDL:filingDL,slack=diff(dl,today);return{...it,required,status,dl,slack,p:required?pFor(status,slack,A)*factor:0}});
+  const open=rows.filter(r=>r.required&&r.status!=='done');
+  const pFail=1-rows.reduce((m,r)=>m*(1-r.p),1);
+  let pRefuse,pDelay;
+  if(!rule.compliant){pRefuse=0.9;pDelay=0.1*pFail*(1-A.refuseShare)}else{pRefuse=pFail*A.refuseShare;pDelay=pFail*(1-A.refuseShare)}
+  if(o.alt){pRefuse=0;pDelay=A.altP}
+  const c=v.costs,fin=finDay(v),D=A.delayDays,R=A.refuseDays;
+  const delay={direct:D*(c.vesselDay+c.storageDay),indirect:Math.max(0,D-c.graceDays)*c.penaltyDay+D*fin};
+  const refuse={direct:c.replaceCost+c.extraLogistics+c.customs+R*c.storageDay,indirect:Math.max(0,R-c.graceDays)*c.penaltyDay+R*fin+c.lostProfit};
+  const E=pDelay*(delay.direct+delay.indirect)+pRefuse*(refuse.direct+refuse.indirect);
+  return{entry,rule,rows,open,pDelay,pRefuse,pTotal:pDelay+pRefuse,delay,refuse,E,filingDL,permitDL,
+    ready:rows.filter(r=>!r.required||r.status==='done').length+(rule.compliant?1:0),total:rows.length+1};
+}
+
+function risks(v){
+  const out=[];
+  if(v.type==='smp'){
+    const base=smp(v),after=smp(v,{factor:S.A.urgentFactor});
+    if(base.open.length||!base.rule.compliant||v.urgentApplied){
+      out.push({id:'smp-doc',auto:true,cat:'doc',name:base.rule.compliant?'Срыв окна допуска на СМП':'Отказ в допуске: судно не соответствует критериям',
+        detail:base.open.length?'Не хватает: '+base.open.map(x=>x.short).join(', '):'Документы закрыты',
+        p:base.pTotal,pAfter:base.rule.compliant?after.pTotal:base.pTotal,Ebase:base.E,Eafter:base.rule.compliant?after.E:base.E,
+        loss:base.pTotal?base.E/base.pTotal:0,window:'документы до '+fdate(base.filingDL),
+        action:base.rule.compliant&&base.open.length?'Срочно закрыть: '+base.open.map(x=>x.short).join(', '):(!base.rule.compliant?'Заменить судно или выбрать другой маршрут':''),
+        actionCost:base.rule.compliant?v.opt.urgentCost:0,applied:!!v.urgentApplied});
+    }
+  }
+  (v.risks||[]).forEach(x=>{const loss=x.direct+x.indirect;out.push({...x,loss,Ebase:x.p*loss,Eafter:x.pAfter*loss})});
+  out.forEach(x=>{x.pEff=x.applied?x.pAfter:x.p;x.E=x.applied?x.Eafter:x.Ebase;x.saving=x.Ebase-x.Eafter-(x.actionCost||0);
+    x.level=x.pEff>=0.3||x.E>=1e7?'crit':x.pEff>=0.15?'warn':'ok'});
+  return out.sort((a,b)=>b.E-a.E);
+}
+
+function summary(v){
+  const R=risks(v),E=R.reduce((s,x)=>s+x.E,0),measures=R.filter(x=>x.applied).reduce((s,x)=>s+(x.actionCost||0),0);
+  const pAny=1-R.reduce((m,x)=>m*(1-x.pEff),1);
+  const c=v.costs,daily=c.vesselDay+c.storageDay+finDay(v);
+  const byCat={};Object.keys(CATS).forEach(k=>byCat[k]=0);R.forEach(x=>byCat[x.cat]+=x.E);
+  const s=v.type==='smp'?smp(v,{factor:v.urgentApplied?S.A.urgentFactor:1}):null;
+  const lvl=(s&&!s.rule.compliant)||pAny>=0.6?'crit':pAny>=0.3?'warn':'ok';
+  const recs=R.filter(x=>x.action&&!x.applied&&x.saving>0).sort((a,b)=>b.saving-a.saving);
+  return{R,E,measures,pAny,daily,byCat,s,lvl,recs};
+}
+const LVL={ok:'Под контролем',warn:'Есть риски',crit:'Высокий риск'};
+
+function scenarios(v){
+  const R=risks(v),c=v.costs,fin=finDay(v),list=[];
+  const other=R.filter(x=>!x.auto).reduce((s,x)=>s+x.E,0),otherNoSmp=R.filter(x=>!x.auto&&!x.smpOnly).reduce((s,x)=>s+x.E,0);
+  if(v.type==='smp'){
+    const f=v.urgentApplied?S.A.urgentFactor:1,base=smp(v,{factor:f});
+    list.push({name:'Оставить как есть',desc:'Текущий план и уже принятые меры',certain:0,risk:base.E+other});
+    if(!v.urgentApplied&&base.open.length&&base.rule.compliant){const r=smp(v,{factor:S.A.urgentFactor});
+      list.push({name:'Срочно закрыть документы',desc:'Оформление через агента: вероятность по открытым пунктам ×'+String(S.A.urgentFactor).replace('.',','),param:['urgentCost','Затраты, ₽'],certain:v.opt.urgentCost,risk:r.E+other,apply:'urgent'})}
+    {const K=v.opt.shiftDays,r=smp(v,{shift:K,factor:f});
+      list.push({name:'Сдвинуть дату входа',desc:'Новая дата входа '+fdate(r.entry)+', сроки подачи сдвигаются вместе с ней',param:['shiftDays','Сдвиг, сут'],
+        certain:K*(c.vesselDay+c.storageDay+fin)+Math.max(0,K-c.graceDays)*c.penaltyDay,risk:r.E+other})}
+    if(v.opt.altExtraDays>0||v.opt.altExtraCost>0){const r=smp(v,{alt:true}),K=v.opt.altExtraDays;
+      list.push({name:'Альтернативный маршрут',desc:'Без захода в акваторию СМП: дольше и дороже, но без риска допуска и льда',param:['altExtraDays','Доп. сутки'],param2:['altExtraCost','Доп. фрахт, ₽'],
+        certain:v.opt.altExtraCost+K*fin+Math.max(0,K-c.graceDays)*c.penaltyDay,risk:r.E+otherNoSmp})}
+  }else{
+    const E=R.reduce((s,x)=>s+x.E,0);
+    list.push({name:'Текущий маршрут',desc:v.routeText||'',certain:0,risk:E});
+    (v.scenarios||[]).forEach(sc=>list.push({name:sc.name,desc:sc.desc+' · '+(sc.extraDays<0?'на '+dn(-sc.extraDays)+' быстрее':'на '+dn(sc.extraDays)+' дольше')+' · риск ×'+String(sc.riskFactor).replace('.',','),
+      certain:sc.extraCost+sc.extraDays*fin+Math.max(0,sc.extraDays-c.graceDays)*c.penaltyDay,risk:E*sc.riskFactor}));
+  }
+  list.forEach(x=>x.total=x.certain+x.risk);
+  list.reduce((a,b)=>b.total<a.total?b:a).best=true;
+  return list;
+}
+
+/* ============ иконки ============ */
+const I={
+ home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ box:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+ warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+ split:'<path d="M12 21v-8M12 13L5 6M12 13l7-7M5 6v4M5 6h4M19 6v4M19 6h-4"/>',
+ chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ doc:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h6"/>',
+ market:'<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+};
+const ico=(k,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[k]}</svg>`;
+const MARK={yes:'<svg class="mk" viewBox="0 0 20 20" aria-label="есть"><path d="M4 10.5l4 4 8-9" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  part:'<svg class="mk" viewBox="0 0 20 20" aria-label="частично"><circle cx="10" cy="10" r="7" fill="none" stroke="var(--muted)" stroke-width="1.8"/><path d="M10 3a7 7 0 0 1 0 14z" fill="var(--muted)"/></svg>',
+  no:'<svg class="mk" viewBox="0 0 20 20" aria-label="нет"><path d="M5 10h10" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/></svg>'};
+
+
+/* Исторические судебные кейсы: подтверждённые сведения из сводки 07.11.2026.
+   Не являются текущими отслеживаемыми поставками или прогнозами. */
+const COURT_CASES=[
+ {id:'a51-3277',no:'А51-3277/2025',title:'Пять контейнеров — порт Санкт-Петербург',cargo:'5 контейнеров',route:'Порт Санкт-Петербург, дальнейший маршрут не установлен',fact:'Хранение с 21–22 февраля по 27 марта 2024 года; начислены расходы за хранение и сверхнормативное использование контейнеров.',amount:'2 239 327 ₽',result:'Иск удовлетворён, апелляция оставила решение в силе.',lesson:'Контроль окончания бесплатного периода и фиксация ставок по каждому контейнеру.',url:'https://base.garant.ru/66648403/'},
+ {id:'a68-7145',no:'А68-7145/2024',title:'Семь контейнеров — Магадан',cargo:'7 контейнеров по 40 футов',route:'Магадан, происхождение груза не установлено',fact:'Получатель не принимал контейнеры; простой составил 199 суток.',amount:'2 457 900 ₽',result:'Требование удовлетворено полностью.',lesson:'Уведомления получателю, контроль сроков приёмки и подтверждение периода простоя.',url:'https://sudact.ru/arbitral/doc/jsrzWB7ioYrC/'},
+ {id:'a56-42685',no:'А56-42685/2025',title:'Контейнер — таможенные платежи и хранение',cargo:'Контейнерный груз',route:'Маршрут в сводке не указан',fact:'Клиент не оплатил таможенные платежи и расходы по контейнеру; экспедитор оплатил их самостоятельно.',amount:'516 220 ₽ + 66 619 ₽',result:'Взысканы долг и неустойка; ответчик не возражал.',lesson:'Проверять готовность платежей до выпуска и согласование расходов.',url:'https://sudact.ru/arbitral/doc/aTq9RkIaZHYa/'},
+ {id:'a51-6291',no:'А51-6291/2022',title:'СМП: дизтопливо Славянка — Певек',cargo:'700 тонн дизельного топлива',route:'Славянка → Певек; фактическая выгрузка в Сахалинской области',fact:'Истёк срок разрешения на плавание по СМП, ледокольная проводка не согласована. Демередж по договору — 250 000 ₽/сутки.',amount:'≈ 12,34 млн ₽',result:'Иск удовлетворён; апелляция оставила в силе. В сводке отмечено расхождение в суммах компонентов.',lesson:'Проверять сроки разрешения на СМП и согласование проводки до выхода.',url:'https://sudact.ru/arbitral/doc/CkLDDpIJPwUL/'},
+ {id:'a56-25588',no:'А56-25588/2024',title:'Отказ во взыскании — нехватка доказательств',cargo:'Контейнерные перевозки',route:'Маршрут в сводке не указан',fact:'В документах не совпадали суммы; не были подтверждены номера контейнеров, период простоя и оплата.',amount:'6 126 977 ₽ (заявлено)',result:'В иске отказано. Это сумма требования, а не взысканных убытков.',lesson:'Фиксировать контейнер, даты, тариф, счёт, реестр и доказательства оплаты.',url:'https://www.zakonrf.info/arbsud/doc-f0f43e80-75f3-55a3-9b09-9aa5c0020cd0/'}
+];
+function caseCatalog(){return `<div class="ph"><div><h2>Поставки: реальные судебные кейсы</h2><p class="lead">Документированные происшествия из судебной практики. Исторические факты, не мониторинг в реальном времени.</p></div></div>
+<div class="case-note"><b>Как читать данные:</b> суммы ниже — взысканные судом либо заявленные требования (помечено отдельно), а не прогноз потерь. Вероятности, даты будущих поставок и маршруты, отсутствующие в решениях, не выдуманы. <button class="btn sm" type="button" data-page="simShip">Открыть учебные сценарии расчёта</button></div>
+<div class="case-grid">${COURT_CASES.map(c=>`<article class="case-card"><span class="pill acc">Дело ${esc(c.no)}</span><h3>${esc(c.title)}</h3><p>${esc(c.cargo)} · ${esc(c.route)}</p><div class="case-sum">${esc(c.amount)}</div><p>${esc(c.result)}</p><button class="btn pri" type="button" data-case="${c.id}">Открыть карточку</button></article>`).join('')}</div>`}
+function caseDetail(){const c=COURT_CASES.find(x=>x.id===S.caseId)||COURT_CASES[0];return `<div class="ph"><div><h2>Судебное дело ${esc(c.no)}</h2><p class="lead">Реальный исторический случай</p></div><button class="btn" type="button" data-page="ship">← К списку</button></div><section class="card"><h3>${esc(c.title)}</h3><p><b>Груз:</b> ${esc(c.cargo)}</p><p><b>Маршрут:</b> ${esc(c.route)}</p><p><b>Что произошло:</b> ${esc(c.fact)}</p><p><b>Сумма:</b> ${esc(c.amount)}</p><p><b>Судебный итог:</b> ${esc(c.result)}</p><div class="case-note"><b>Что могла бы контролировать система:</b> ${esc(c.lesson)}<p>Это продуктовая гипотеза, а не установленный судом факт предотвратимости убытков.</p></div><p><a href="${c.url}" target="_blank" rel="noopener noreferrer">Открыть судебный источник ↗</a></p></section>`}
+function qrPage(){return `<div class="ph"><div><h2>QR-код сайта</h2><p class="lead">Отсканируйте код камерой телефона для перехода к опубликованному прототипу.</p></div></div><section class="card qr-section"><img alt="QR-код сайта ВЭД Интеллект" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAAC7klEQVR4nO2cQY6cMBBFf8VIvTRSDtBHMTfIkXKm3MA+yhwgEl4igX4WLhvoLKLRZJoeKC8s5Oapjaguqn4VLcS7R/r2fgYwyCCDDDLIIIPOCYmODkDuINIDQBZZpzKGQ7Zn0POhQJIc23IWATyJdCcBOJIk99DztmfQ86GsDkAGLMUYZMgddAKgHuSg7Rl0IORnkG8dkHoAYfy8bzLoS0CpB0TukzBiEaRy9BnfZNBLQvVJ4AkgAwAckYYOEghIiCjRw1bJevFrMug/QElESoYR3jrIz9ERyDX1GLCUVOOo7Rn0bB+xk7IXITDplHoHPpzw6tdk0EcglKxSA0i3SUEZ/ayR5eZTkowvfk0GfQTCVmfws06hrpGcQY4AIxyLbmEWcWaoWoTXGw91BTMAT5KjKwoVwqgnm0WcGmoWQSKw+YgRqmNGPwOA2wiXZhGnhvRnX5wCnJpAKM8Kpz6imYpZxPmhFllqkIAwOm4kKY0s65PE4ojTQ/VnD5S7z+ibWdQjtCTEfMT5oZZr1ESihJJ7Y4jlVIsjrgA1H+HKtF1bzcJr6mFPjfNDez2iHq16RASaHgGLIy4A/aVHFH3SzyWiWP2G6RGXgsi3DjL41TO0SpeftL6V+sO2Z9Ax2edGgFhjBloccVHITwL4SWQomuUijFlEe2fyjYzZuuquALW77Ajk7wRyDyL3kBAJIN8I+N8CLZM/d3sGHQZlERn8pG0zgCYXIvdtXUOGg7Zn0DFQvqkKke4zRPpFSkvVkEUQ2Douv9I1GfTewf2oy1rfUplqV/qwyPIC0PpOV5WkFtEQorzT1QHAYj7iAlDNPlumWQrhbYrARsI0H3EdKLeXOvONMpTU46bPiiQiqmMetD2DDoaStNTjPukboCXGfIntGfSJUPe4kO5z68V3RPrhKOGX7Fr0X/yaDPoI9BhHMPoZj80yaxeNVbpOD+2q4Zs657bjspY9rc/yCpDw3+c8DvtnMoMMMsgggwwyCAD+APZkeFhaSglWAAAAAElFTkSuQmCC"><div><h3>ВЭД Интеллект</h3><p><a href="${PUBLIC_URL}" target="_blank" rel="noopener noreferrer">${PUBLIC_URL}</a></p><p>QR ведёт на текущую публичную страницу. Для появления изменений на сайте потребуется загрузить этот HTML в GitHub Pages.</p><a class="btn" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAAC7klEQVR4nO2cQY6cMBBFf8VIvTRSDtBHMTfIkXKm3MA+yhwgEl4igX4WLhvoLKLRZJoeKC8s5Oapjaguqn4VLcS7R/r2fgYwyCCDDDLIIIPOCYmODkDuINIDQBZZpzKGQ7Zn0POhQJIc23IWATyJdCcBOJIk99DztmfQ86GsDkAGLMUYZMgddAKgHuSg7Rl0IORnkG8dkHoAYfy8bzLoS0CpB0TukzBiEaRy9BnfZNBLQvVJ4AkgAwAckYYOEghIiCjRw1bJevFrMug/QElESoYR3jrIz9ERyDX1GLCUVOOo7Rn0bB+xk7IXITDplHoHPpzw6tdk0EcglKxSA0i3SUEZ/ayR5eZTkowvfk0GfQTCVmfws06hrpGcQY4AIxyLbmEWcWaoWoTXGw91BTMAT5KjKwoVwqgnm0WcGmoWQSKw+YgRqmNGPwOA2wiXZhGnhvRnX5wCnJpAKM8Kpz6imYpZxPmhFllqkIAwOm4kKY0s65PE4ojTQ/VnD5S7z+ibWdQjtCTEfMT5oZZr1ESihJJ7Y4jlVIsjrgA1H+HKtF1bzcJr6mFPjfNDez2iHq16RASaHgGLIy4A/aVHFH3SzyWiWP2G6RGXgsi3DjL41TO0SpeftL6V+sO2Z9Ax2edGgFhjBloccVHITwL4SWQomuUijFlEe2fyjYzZuuquALW77Ajk7wRyDyL3kBAJIN8I+N8CLZM/d3sGHQZlERn8pG0zgCYXIvdtXUOGg7Zn0DFQvqkKke4zRPpFSkvVkEUQ2Douv9I1GfTewf2oy1rfUplqV/qwyPIC0PpOV5WkFtEQorzT1QHAYj7iAlDNPlumWQrhbYrARsI0H3EdKLeXOvONMpTU46bPiiQiqmMetD2DDoaStNTjPukboCXGfIntGfSJUPe4kO5z68V3RPrhKOGX7Fr0X/yaDPoI9BhHMPoZj80yaxeNVbpOD+2q4Zs657bjspY9rc/yCpDw3+c8DvtnMoMMMsgggwwyCAD+APZkeFhaSglWAAAAAElFTkSuQmCC" download="ved-intellekt-qr.png">Сохранить QR-код</a></div></section>`}
+const PUBLIC_URL='https://eabbasova2004-netizen.github.io/ved-intellekt/';
+
+/* ============ навигация ============ */
+const PAGES=[['home','Главная','home'],['ship','Судебные кейсы','box'],['risks','Риски','warn'],['scen','Сценарии','split'],['analytics','Аналитика','chart'],['docs','Документы и отчёты','doc'],['market','Рынок','market'],['settings','Настройки','gear'],['qr','QR-код','doc']];
+function renderNav(){
+  $('#nav').innerHTML=PAGES.slice(0,6).map(navBtn).join('')+
+  `<div class="sep"></div><div class="sel">Учебная модель</div><select id="shipSel" aria-label="Текущая поставка">${S.voyages.map(v=>`<option value="${v.id}" ${v.id===S.selected?'selected':''}>${esc(v.no)} · ${esc(v.from)} → ${esc(v.to)}</option>`).join('')}</select><div class="sep"></div>`+
+  PAGES.slice(6).map(navBtn).join('');
+}
+const navBtn=([k,t,i])=>`<button type="button" data-page="${k}" ${S.page===k||(S.page==='card'&&k==='ship')?'aria-current="page"':''}>${ico(i)}<span>${t}</span></button>`;
+const $=s=>document.querySelector(s);
+function go(p){S.page=p;save();render();window.scrollTo({top:0})}
+function render(){renderNav();const v=cur();const P={home,ship:caseCatalog,caseStudy:caseDetail,simShip:ship,card,risks:riskPage,scen:scenPage,analytics,docs,market,settings,newShip,qr:qrPage};
+  $('#page').innerHTML=(!v&&!['market','newShip','ship'].includes(S.page))?`<div class="card"><h3>Поставок нет</h3><button class="btn pri" data-act="new" type="button">Создать поставку</button></div>`:(P[S.page]||home)(v);}
+
+/* ============ блоки ============ */
+function routeMap(v){
+  const W=700,H=290,n=v.nodes||[];
+  const path=pts=>pts.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' ');
+  const pts=n.map(x=>[x[1],x[2]]);
+  const smpZone=v.type==='smp'?`<path d="M150 40 Q 360 20 680 60 L 690 190 Q 520 150 360 165 Q 230 175 150 175 Z" fill="var(--sea-2)" opacity=".7"/><text x="420" y="30" class="mlabel-s" text-anchor="middle">Акватория Северного морского пути</text>`:'';
+  const grid=[60,120,180,240].map(y=>`<path d="M0 ${y} Q 350 ${y-18} 700 ${y}" stroke="var(--grid)" stroke-width="1" fill="none" opacity=".7"/>`).join('')+[140,280,420,560].map(x=>`<path d="M${x} 0 L ${x+30} ${H}" stroke="var(--grid)" stroke-width="1" opacity=".5"/>`).join('');
+  const p=pts[Math.min(v.pos||0,pts.length-1)]||[0,0];
+  const ship=`<g transform="translate(${p[0]-36},${p[1]-30})"><rect width="26" height="20" rx="6" fill="var(--accent)"/><path d="M6 13h14l-2 3H8z M10 6h6v6h-6z" fill="var(--card)"/></g>`;
+  return `<div class="map"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Схема маршрута ${esc(v.from)} — ${esc(v.to)}">
+   <rect width="${W}" height="${H}" fill="var(--sea)"/>${grid}${smpZone}
+   ${v.alt?`<path d="${path(v.alt)}" fill="none" stroke="var(--muted)" stroke-width="2.4" stroke-dasharray="6 6"/><text x="${v.alt[1][0]}" y="${v.alt[1][1]+22}" class="mlabel-s">${esc(v.altLabel||'Альтернатива')}</text>`:''}
+   <path d="${path(pts)}" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+   ${n.map((x,i)=>{const end=i===0||i===n.length-1;return `<circle cx="${x[1]}" cy="${x[2]}" r="${end?7:4.5}" fill="${end?'var(--card)':'var(--accent)'}" stroke="var(--accent)" stroke-width="${end?3:0}"/><text x="${x[1]+(x[1]>560?-10:10)}" y="${x[2]+(x[2]<50?18:-10)}" class="${end?'mlabel':'mlabel-s'}" text-anchor="${x[1]>560?'end':'start'}">${esc(x[0])}</text>`}).join('')}
+   ${ship}<text x="${W-10}" y="${H-10}" class="mlabel-s" text-anchor="end">схема, не в масштабе</text></svg></div>`;
+}
+
+function donut(sm){
+  const tot=Object.values(sm.byCat).reduce((a,b)=>a+b,0)||1,r=56,C=2*Math.PI*r;let off=0;
+  const segs=Object.keys(CATS).map(k=>{const f=sm.byCat[k]/tot;const s=`<circle cx="75" cy="75" r="${r}" fill="none" stroke="var(${CATC[k]})" stroke-width="18" stroke-dasharray="${Math.max(0,f*C-2)} ${C}" stroke-dashoffset="${-off*C}" transform="rotate(-90 75 75)"/>`;off+=f;return f>0?s:''}).join('');
+  return `<div class="donut"><svg viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="Риск по категориям"><circle cx="75" cy="75" r="${r}" fill="none" stroke="var(--card-2)" stroke-width="18"/>${segs}
+    <text x="75" y="76" text-anchor="middle" style="font:800 26px var(--font);fill:var(--ink)">${pct(sm.pAny)}</text><text x="75" y="96" text-anchor="middle" style="font:600 11px var(--font);fill:var(--muted)">риск срыва</text></svg>
+    <div class="legend-list">${Object.keys(CATS).map(k=>`<div><span class="dot" style="background:var(${CATC[k]})"></span><span>${CATS[k]}</span><b>${Math.round(sm.byCat[k]/tot*100)}%</b></div>`).join('')}<span class="sub">доля в ожидаемой стоимости срыва</span></div></div>`;
+}
+
+const warnIco=l=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--${l==='ok'?'ok':l})" stroke-width="2" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5" stroke-linecap="round"/></svg>`;
+const checkIco='<svg width="16" height="16" viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function stepper(v){const st=STAGES[v.type];return `<div class="stepper">${st.map((t,i)=>`<div class="step ${i<v.stage?'done':i===v.stage?'cur':''}"><i></i><b>${t}</b><span>${i<v.stage?'пройдено':i===v.stage?'сейчас':'—'}</span></div>`).join('')}</div>`}
+
+function shipInfo(v,sm){
+  const end=parse(v.end);
+  return `<dl class="kv"><dt>Груз</dt><dd>${esc(v.cargo)}</dd><dt>Объём</dt><dd>${esc(v.volume)}</dd><dt>Стоимость</dt><dd>${rub(v.cargoValue)}</dd>
+   <dt>Маршрут</dt><dd>${esc(v.routeText||v.from+' → СМП → '+v.to)}</dd>
+   ${v.type==='smp'?`<dt>Судно</dt><dd>${esc(v.name)}, ${esc(v.iceClass)}</dd><dt>Вход в СМП</dt><dd>${fdate(parse(v.entry))}</dd>`:''}
+   <dt>Сроки</dt><dd>${fdate(parse(v.start))} – ${fdate(end)}</dd></dl>`;
+}
+
+/* ============ страницы ============ */
+function home(v){
+  const sm=summary(v),top=sm.R.slice(0,3),rec=sm.recs[0];
+  return `
+  <div class="notice"><b>Демо-данные.</b> Поставки, суда и суммы вымышлены. Вероятности — сценарная оценка с допущениями из раздела «Настройки», а не прогноз модели на исторических данных. Решение принимает человек.</div>
+  <div class="grid g-3">
+    <section class="card"><div class="card-h"><h3>Маршрут поставки</h3><span class="pill acc">${esc(v.from)} → ${esc(v.to)}</span></div>${routeMap(v)}</section>
+    <section class="card"><div class="card-h"><h3>Поставка № ${esc(v.no)}</h3><span class="pill ${sm.lvl}">${LVL[sm.lvl]}</span></div>${shipInfo(v,sm)}
+      <div class="row" style="margin-top:auto"><button class="btn pri" type="button" data-page="card" style="flex:1">Подробнее</button></div></section>
+  </div>
+  <div class="kpis">
+    <div class="kpi hero"><div class="k">Ожидаемая стоимость срыва</div><div class="v">${rs(sm.E)}</div><div class="h">Σ вероятность × (прямые + косвенные)</div></div>
+    <div class="kpi"><div class="k">Вероятность хотя бы одного срыва</div><div class="v" style="color:var(--${sm.lvl})">${pct(sm.pAny)}</div><div class="h">${sm.R.length} ${plural(sm.R.length,'риск','риска','рисков')} в оценке</div></div>
+    <div class="kpi"><div class="k">Потери за сутки задержки</div><div class="v">${rs(sm.daily)}</div><div class="h">+ неустойка ${rs(v.costs.penaltyDay)}/сут после ${v.costs.graceDays} сут</div></div>
+    <div class="kpi"><div class="k">${v.type==='smp'?'Готовность к допуску на СМП':'Затраты на принятые меры'}</div><div class="v">${v.type==='smp'?sm.s.ready+' из '+sm.s.total:rs(sm.measures)}</div><div class="h">${v.type==='smp'?'до входа '+dn(diff(sm.s.entry,today)):'снижают ожидаемые потери'}</div></div>
+  </div>
+  <div class="grid g-eq3">
+    <section class="card"><h3>Уровень риска по поставке</h3>${donut(sm)}</section>
+    <section class="card"><h3>${warnIco('crit')} Ключевые угрозы</h3><div class="threats">${top.map(x=>`<div class="threat">${warnIco(x.level)}<div><div class="n">${esc(x.name)}</div><div class="s">${x.level==='crit'?'высокий':x.level==='warn'?'средний':'низкий'} риск ${pct(x.pEff)} · ${rs(x.E)} · ${esc(x.window||'')}</div></div></div>`).join('')||'<span class="lead">Существенных угроз нет</span>'}</div>
+      <button class="link" type="button" data-page="risks" style="align-self:flex-start;margin-top:auto">Все риски →</button></section>
+    <section class="card"><h3>Прогноз и рекомендации</h3>
+      <ul class="checks">
+        <li>${checkIco}<span>Вероятность срыва: <b>${pct(sm.pAny)}</b></span></li>
+        <li>${checkIco}<span>Ожидаемые доп. расходы: <b>${rs(sm.E)}</b></span></li>
+        <li>${checkIco}<span>Рекомендуемое действие: <b>${rec?esc(rec.action):'новых мер не требуется'}</b>${rec?`<br><span class="sub">снизит ожидаемые потери на ${rs(rec.saving)}${rec.actionCost?' с учётом затрат '+rs(rec.actionCost):''}</span>`:''}</span></li>
+      </ul>
+      ${rec?`<button class="btn pri" type="button" data-act="apply" data-rid="${rec.id}" style="margin-top:auto">Применить рекомендацию</button>`:`<button class="btn" type="button" data-page="scen" style="margin-top:auto">Сравнить сценарии</button>`}</section>
+  </div>
+  <div class="grid g-eq3">
+    <section class="card"><h3>Грузопоток по СМП, млн т</h3>${smpChart()}<span class="sub">Факт 2024 и ориентир Росатома на 2035 год. Источник: концепция проекта.</span></section>
+    <section class="card"><h3>Детализация рисков</h3><div class="tscroll">${riskTable(sm.R.slice(0,5),false)}</div><button class="link" type="button" data-page="risks" style="align-self:flex-start">Вся детализация →</button></section>
+    <section class="card"><h3>Документы и отчёты</h3>${reportList()}<button class="link" type="button" data-page="docs" style="align-self:flex-start;margin-top:auto">Все документы →</button></section>
+  </div>
+  <div class="flow">
+    <div><b>Данные</b>Контракт, инвойс, ставки простоя, ЭДО и ЭПД с согласия клиента</div>
+    <div><b>Цифровой профиль поставки</b>Товар, маршрут, сроки, документы</div>
+    <div class="hl"><b>Оценка риска в рублях</b>Вероятность × прямые и косвенные потери</div>
+    <div><b>Действие</b>Сравнение вариантов, решение за ответственным</div>
+    <div><b>Результат</b>План и факт, история для калибровки оценок</div>
+  </div>`;
+}
+
+function riskTable(R,full){
+  return `<table><thead><tr><th>Риск</th>${full?'<th>Категория</th><th>Окно</th>':''}<th class="r">Вероятность</th>${full?'<th class="r">Потери</th>':''}<th class="r">Ожидаемо</th>${full?'<th>Мера</th>':''}</tr></thead><tbody>
+  ${R.map(x=>`<tr><td><span class="row" style="gap:8px;flex-wrap:nowrap"><span class="dot" style="background:var(--${x.level})"></span><span>${esc(x.name)}${x.detail&&full?`<br><span class="sub">${esc(x.detail)}</span>`:''}${x.vname?`<br><span class="sub">${esc(x.vname)}</span>`:''}</span></span></td>
+   ${full?`<td><span class="pill na"><span class="dot" style="background:var(${CATC[x.cat]})"></span>${CATS[x.cat]}</span></td><td class="sub">${esc(x.window||'')}</td>`:''}
+   <td class="r">${x.applied?`<s class="sub">${pct(x.p)}</s> `:''}${pct(x.pEff)}</td>${full?`<td class="r">${rs(x.loss)}</td>`:''}<td class="r"><b>${rs(x.E)}</b></td>
+   ${full?`<td>${x.action?(x.applied?'<span class="pill ok">принята</span>':`<button class="btn sm" type="button" data-act="apply" data-rid="${x.id}" data-vid="${x.vid||''}">Выполнить</button>`):'<span class="sub">—</span>'}</td>`:''}</tr>`).join('')}
+  </tbody></table>`;
+}
+
+function reportList(){
+  const items=[['risk','Отчёт по рискам поставки'],['fin','Финансовая оценка срыва'],['exec','Сводка для руководителя']];
+  return `<div class="doclist">${items.map(([k,t])=>`<div class="doc"><span class="ic">${ico('doc',18)}</span><div><b>${t}</b><div class="sub">формируется из текущих данных</div></div><button class="btn sm" type="button" data-act="report" data-k="${k}">Открыть</button></div>`).join('')}</div>`;
+}
+
+function smpChart(){
+  const W=360,H=200,L=34,B=24,T=24,R=12,x=y=>L+(y-2024)/(2035-2024)*(W-L-R),yv=t=>H-B-(t/160)*(H-B-T);
+  const ticks=[0,40,80,120,160].map(t=>`<line x1="${L}" x2="${W-R}" y1="${yv(t)}" y2="${yv(t)}" stroke="var(--line)"/><text x="${L-6}" y="${yv(t)+4}" text-anchor="end" style="font:600 10.5px var(--font);fill:var(--muted)">${t}</text>`).join('');
+  const yrs=[2024,2026,2028,2030,2032,2035].map(y=>`<text x="${x(y)}" y="${H-6}" text-anchor="middle" style="font:600 10.5px var(--font);fill:var(--muted)">${y}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Грузопоток по СМП: 37,9 млн т в 2024, ориентир 110–150 млн т к 2035">${ticks}${yrs}
+   <polygon points="${x(2024)},${yv(37.9)} ${x(2035)},${yv(150)} ${x(2035)},${yv(110)}" fill="var(--accent)" opacity=".16"/>
+   <line x1="${x(2024)}" y1="${yv(37.9)}" x2="${x(2035)}" y2="${yv(130)}" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="5 4"/>
+   <circle cx="${x(2024)}" cy="${yv(37.9)}" r="5" fill="var(--accent)"/><text x="${x(2024)+8}" y="${yv(37.9)+16}" style="font:700 11px var(--font);fill:var(--ink)">37,9 · факт 2024</text>
+   <rect x="${x(2035)-78}" y="${yv(150)-20}" width="72" height="18" rx="5" fill="var(--accent)"/><text x="${x(2035)-42}" y="${yv(150)-7}" text-anchor="middle" style="font:700 11px var(--font);fill:var(--on-accent)">110–150</text></svg>`;
+}
+
+function ship(){
+  return `<div class="ph"><div><h2>Поставки</h2><p class="lead">Все поставки с оценкой стоимости срыва. Нажмите на строку, чтобы открыть карточку.</p></div><button class="btn pri" type="button" data-act="new">+ Новая поставка</button></div>
+  <section class="card"><div class="tscroll"><table><thead><tr><th>№</th><th>Поставка</th><th>Этап</th><th>Статус</th><th class="r">Риск срыва</th><th class="r">Ожидаемая стоимость срыва</th></tr></thead><tbody>
+  ${S.voyages.map(v=>{const sm=summary(v);return `<tr class="click" data-open="${v.id}"><td><b>${esc(v.no)}</b><br><span class="sub">${v.type==='smp'?'кейс СМП':'обычная поставка'}</span></td><td>${esc(v.cargo)}<br><span class="sub">${esc(v.from)} → ${esc(v.to)}</span></td><td>${STAGES[v.type][v.stage]}</td><td><span class="pill ${sm.lvl}">${LVL[sm.lvl]}</span></td><td class="r">${pct(sm.pAny)}</td><td class="r"><b>${rs(sm.E)}</b></td></tr>`}).join('')}
+  </tbody></table></div></section>`;
+}
+
+function card(v){
+  const sm=summary(v),s=sm.s;
+  const slack=x=>x.status==='done'?'':x.slack<0?`<span class="pill crit">срок прошёл ${dn(-x.slack)} назад</span>`:`<span class="pill ${x.slack<3?'crit':x.slack<10?'warn':'na'}">осталось ${dn(x.slack)}</span>`;
+  const plan=sm.R.filter(x=>x.action);
+  return `<div class="ph"><div><h2>Поставка № ${esc(v.no)}</h2><p class="lead">${esc(v.cargo)} · ${esc(v.from)} → ${esc(v.to)}</p></div>
+    <div class="row"><span class="pill ${sm.lvl}">${LVL[sm.lvl]}</span><button class="btn" type="button" data-act="stage" data-d="-1">← Этап</button><button class="btn" type="button" data-act="stage" data-d="1">Этап →</button><button class="btn" type="button" data-act="del">Удалить</button></div></div>
+  <section class="card">${stepper(v)}</section>
+  <div class="grid g-3">
+    <section class="card"><h3>Общий риск поставки</h3>
+      <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="kpi hero"><div class="k">Ожидаемая стоимость срыва</div><div class="v">${rs(sm.E)}</div></div>
+        <div class="kpi"><div class="k">Вероятность срыва</div><div class="v" style="color:var(--${sm.lvl})">${pct(sm.pAny)}</div></div>
+        <div class="kpi"><div class="k">Потери за сутки</div><div class="v">${rs(sm.daily)}</div></div></div>
+      <div class="tscroll">${riskTable(sm.R,true)}</div></section>
+    <section class="card"><h3>Данные о поставке</h3>${shipInfo(v,sm)}${routeMap(v)}</section>
+  </div>
+  ${v.type==='smp'?`<section class="card"><h3>Условия допуска на СМП</h3>
+    <p class="lead">Сроки от даты входа ${fdate(s.entry)}: документы к заявлению за ${S.A.leadWorkDays} раб. дней (до ${fdate(s.filingDL)}), разрешение за ${S.A.permitBuffer} сут до входа (до ${fdate(s.permitDL)}). Перечень упрощён и требует сверки с действующими Правилами плавания в акватории СМП.</p>
+    <div>
+      <div class="crow"><div><div class="t">Соответствие судна критериям допуска</div><div class="n">Ледовый класс ${esc(v.iceClass)}, ледовые условия «${COND[v.iceCond].toLowerCase()}», проводка ${s.rule.escort?'требуется':'не требуется'}</div></div>
+        <div>${s.rule.compliant?'<span class="pill ok">Соответствует</span>':'<span class="pill crit">Не соответствует</span>'}</div></div>
+      ${smp(v).rows.map(x=>`<div class="crow"><div><div class="t">${esc(x.title)}</div><div class="n">${esc(x.note)}</div>
+        ${x.required?`<div class="meta"><span>срок <b>${fdate(x.dl)}</b></span>${slack(x)}${x.p>0?`<span>вклад в риск <b>${pct(x.p)}</b></span>`:''}</div>`:''}</div>
+        <div>${x.required?`<span class="seg" role="group" aria-label="Статус">${['done','work','none'].map(st=>`<button type="button" class="v-${st}" data-act="item" data-item="${x.key}" data-status="${st}" aria-pressed="${x.status===st}">${STATUS[st]}</button>`).join('')}</span>`:'<span class="pill na">Не требуется</span>'}</div></div>`).join('')}
+    </div></section>`:''}
+  <div class="grid g-2">
+    <section class="card"><h3>План действий</h3><p class="lead">Меры отсортированы по снижению ожидаемых потерь. Вы принимаете решение и фиксируете его в платформе.</p>
+      <ol class="plan">${plan.map((x,i)=>`<li class="${x.applied?'applied':''}"><span class="no">${i+1}</span><div><b>${esc(x.action)}</b><div class="sub">${x.applied?'принята':'экономия '+rs(x.saving)}${x.actionCost?' · затраты '+rs(x.actionCost):''} · риск ${pct(x.p)} → ${pct(x.pAfter)}</div></div>
+        ${x.applied?`<button class="btn sm" type="button" data-act="unapply" data-rid="${x.id}">Отменить</button>`:`<button class="btn sm pri" type="button" data-act="apply" data-rid="${x.id}">Выполнить</button>`}</li>`).join('')||'<li><span></span><span class="lead">Мер нет</span></li>'}</ol>
+      <button class="link" type="button" data-page="scen" style="align-self:flex-start">Сравнить сценарии →</button></section>
+    <section class="card"><h3>Последние события</h3><ul class="events">${[...v.events].reverse().slice(0,7).map(e=>`<li><i></i><div><b>${fdate(parse(e.date))}</b><div>${esc(e.text)}</div></div></li>`).join('')}</ul></section>
+  </div>`;
+}
+
+function riskPage(){
+  const all=[];S.voyages.forEach(v=>risks(v).forEach(x=>all.push({...x,vid:v.id,vname:v.no+' · '+v.from+' → '+v.to})));
+  all.sort((a,b)=>b.E-a.E);const f=S.riskFilter||'all';const list=f==='all'?all:all.filter(x=>x.cat===f);
+  const tot=list.reduce((s,x)=>s+x.E,0);
+  return `<div class="ph"><div><h2>Реестр рисков</h2><p class="lead">Все риски по всем поставкам, по убыванию ожидаемых потерь.</p></div></div>
+  <div class="row">${[['all','Все']].concat(Object.entries(CATS)).map(([k,t])=>`<button type="button" class="btn sm ${f===k?'pri':''}" data-act="rf" data-k="${k}">${t}</button>`).join('')}</div>
+  <section class="card"><div class="tscroll">${riskTable(list,true)}</div><div class="row" style="justify-content:space-between"><span class="sub">${list.length} ${plural(list.length,'риск','риска','рисков')}</span><b>Итого ожидаемо: ${rs(tot)}</b></div></section>`;
+}
+
+function scenPage(v){
+  const L=scenarios(v),mx=Math.max(...L.map(o=>o.total),1),best=L.find(o=>o.best);
+  return `<div class="ph"><div><h2>Сценарное сравнение</h2><p class="lead">Поставка № ${esc(v.no)}. Итог варианта = гарантированные затраты + оставшийся ожидаемый риск. Наименьшие ожидаемые потери: «${esc(best.name)}», ${rs(best.total)}. Решение за вами.</p></div></div>
+  <section class="card">
+   ${L.map(o=>`<div class="opt ${o.best?'best':''}"><div><div class="on">${esc(o.name)} ${o.best?'<span class="pill ok">наименьшие потери</span>':''}</div><div class="od">${esc(o.desc)}</div>
+     ${o.param?`<label class="param">${o.param[1]} <input type="number" min="0" id="op-${o.param[0]}" data-opt="${o.param[0]}" value="${v.opt[o.param[0]]}"></label>`:''}
+     ${o.param2?`<label class="param">${o.param2[1]} <input type="number" min="0" id="op-${o.param2[0]}" data-opt="${o.param2[0]}" value="${v.opt[o.param2[0]]}"></label>`:''}
+     ${o.apply?`<div style="margin-top:8px"><button class="btn sm pri" type="button" data-act="apply" data-rid="smp-doc">Выбрать этот вариант</button></div>`:''}</div>
+     <div class="bar" title="затраты ${rub(o.certain)}, риск ${rub(o.risk)}"><span class="c" style="width:${Math.max(0,o.certain)/mx*100}%"></span><span class="x" style="width:${o.risk/mx*100}%"></span></div>
+     <div class="ov"><div class="big">${rs(o.total)}</div><div class="sm">затраты ${rs(o.certain)} · риск ${rs(o.risk)}</div></div></div>`).join('')}
+   <div class="legend"><span><i style="background:var(--accent)"></i>Гарантированные затраты (отрицательные = экономия)</span><span><i style="background:repeating-linear-gradient(135deg,var(--crit) 0 2px,var(--crit-soft) 2px 7px)"></i>Ожидаемый риск</span></div>
+  </section>
+  ${v.type==='smp'?smpBreakdown(v):''}`;
+}
+
+function smpBreakdown(v){const r=smp(v,{factor:v.urgentApplied?S.A.urgentFactor:1});
+  return `<section class="card"><h3>Как считается риск допуска на СМП</h3><p class="lead">Ожидаемая стоимость = Σ вероятность события × (прямые потери + косвенные потери)</p><div class="tscroll"><table>
+  <thead><tr><th>Событие</th><th class="r">Вероятность</th><th class="r">Прямые</th><th class="r">Косвенные</th><th class="r">Ожидаемо</th></tr></thead><tbody>
+  <tr><td>Задержка допуска на ${S.A.delayDays} сут<br><span class="sub">простой судна и хранение · неустойка после ${v.costs.graceDays} сут, стоимость капитала</span></td><td class="r">${pct(r.pDelay)}</td><td class="r">${rub(r.delay.direct)}</td><td class="r">${rub(r.delay.indirect)}</td><td class="r">${rub(r.pDelay*(r.delay.direct+r.delay.indirect))}</td></tr>
+  <tr><td>Отказ в допуске и замена рейса<br><span class="sub">новый фрахт, доп. логистика, хранение ${S.A.refuseDays} сут · неустойка, капитал, упущенная выгода</span></td><td class="r">${pct(r.pRefuse)}</td><td class="r">${rub(r.refuse.direct)}</td><td class="r">${rub(r.refuse.indirect)}</td><td class="r">${rub(r.pRefuse*(r.refuse.direct+r.refuse.indirect))}</td></tr>
+  <tr class="total"><td>Итого по допуску</td><td class="r">${pct(r.pTotal)}</td><td></td><td></td><td class="r">${rub(r.E)}</td></tr></tbody></table></div></section>`;}
+
+function analytics(){
+  const rows=S.voyages.map(v=>({v,sm:summary(v)})),mx=Math.max(...rows.map(r=>r.sm.E),1);
+  const cat={};Object.keys(CATS).forEach(k=>cat[k]=0);rows.forEach(r=>Object.keys(CATS).forEach(k=>cat[k]+=r.sm.byCat[k]));
+  const mc=Math.max(...Object.values(cat),1),tot=rows.reduce((s,r)=>s+r.sm.E,0),meas=rows.reduce((s,r)=>s+r.sm.measures,0);
+  const saved=rows.reduce((s,r)=>s+r.sm.R.filter(x=>x.applied).reduce((a,x)=>a+x.Ebase-x.Eafter,0),0);
+  return `<div class="ph"><div><h2>Аналитика портфеля</h2><p class="lead">Сводка по всем поставкам: где сосредоточены ожидаемые потери и сколько удалось предотвратить.</p></div></div>
+  <div class="kpis">
+    <div class="kpi hero"><div class="k">Ожидаемые потери портфеля</div><div class="v">${rs(tot)}</div><div class="h">${rows.length} ${plural(rows.length,'поставка','поставки','поставок')}</div></div>
+    <div class="kpi"><div class="k">Снижено принятыми мерами</div><div class="v" style="color:var(--ok)">${rs(saved)}</div><div class="h">ожидаемых потерь</div></div>
+    <div class="kpi"><div class="k">Затраты на меры</div><div class="v">${rs(meas)}</div><div class="h">гарантированные</div></div>
+    <div class="kpi"><div class="k">Поставок с высоким риском</div><div class="v" style="color:var(--crit)">${rows.filter(r=>r.sm.lvl==='crit').length}</div><div class="h">из ${rows.length}</div></div>
+  </div>
+  <div class="grid g-2">
+    <section class="card"><h3>Ожидаемая стоимость срыва по поставкам</h3><div class="hb">${rows.sort((a,b)=>b.sm.E-a.sm.E).map(r=>`<div class="r"><span>${esc(r.v.no)}<br><span class="sub">${esc(r.v.from)} → ${esc(r.v.to)}</span></span><span class="track"><span class="fill" style="display:block;width:${r.sm.E/mx*100}%;background:var(--${r.sm.lvl})"></span></span><b style="text-align:right">${rs(r.sm.E)}</b></div>`).join('')}</div></section>
+    <section class="card"><h3>По категориям риска</h3><div class="hb">${Object.keys(CATS).sort((a,b)=>cat[b]-cat[a]).map(k=>`<div class="r"><span>${CATS[k]}</span><span class="track"><span class="fill" style="display:block;width:${cat[k]/mc*100}%;background:var(${CATC[k]})"></span></span><b style="text-align:right">${rs(cat[k])}</b></div>`).join('')}</div></section>
+    <section class="card"><h3>Грузопоток по СМП, млн т</h3>${smpChart()}<p class="lead">По данным Росатома, в 2024 году по СМП перевезено около 37,9 млн т, из них транзит более 3 млн т (92 рейса). Ориентир на 2035 год — 110–150 млн т. Международный транзит, по прогнозу Атомфлота, раньше 2029 года ожидать не стоит.</p></section>
+    <section class="card"><h3>Почему оценки сценарные</h3><p class="lead">На СМП выдаётся порядка 1,3 тыс. разрешений в год (2024), этого мало для статистической модели. Первый год вероятности задаются как допущения и подписываются так. После каждой поставки план сравнивается с фактом, и допущения калибруются.</p></section>
+  </div>`;
+}
+
+function docs(v){
+  const k=S.report||'risk';
+  return `<div class="ph"><div><h2>Документы и отчёты</h2><p class="lead">Статус документов по поставкам СМП и отчёты по текущей поставке № ${esc(v.no)}.</p></div></div>
+  <section class="card"><h3>Документы для допуска на СМП</h3><div class="tscroll"><table><thead><tr><th>Поставка</th>${ITEMS.map(i=>`<th>${i.short[0].toUpperCase()+i.short.slice(1)}</th>`).join('')}</tr></thead><tbody>
+   ${S.voyages.filter(x=>x.type==='smp').map(x=>{const r=smp(x);return `<tr class="click" data-open="${x.id}"><td><b>${esc(x.no)}</b><br><span class="sub">${esc(x.name)}</span></td>${r.rows.map(it=>`<td>${it.status==='na'?'<span class="pill na">не требуется</span>':`<span class="pill ${it.status==='done'?'ok':it.status==='work'?'warn':'crit'}">${STATUS[it.status]}</span><br><span class="sub">до ${fdate(it.dl)}</span>`}</td>`).join('')}</tr>`}).join('')}
+  </tbody></table></div></section>
+  <div class="grid g-3">
+   <section class="card"><div class="card-h"><h3>${[['risk','Отчёт по рискам поставки'],['fin','Финансовая оценка срыва'],['exec','Сводка для руководителя']].find(x=>x[0]===k)[1]}</h3><button class="btn sm pri" type="button" data-act="copy">Скопировать</button></div><pre class="report" id="rep">${esc(report(v,k))}</pre></section>
+   <section class="card"><h3>Отчёты</h3>${reportList()}</section>
+  </div>`;
+}
+
+function report(v,k){
+  const sm=summary(v),L=scenarios(v),best=L.find(o=>o.best),hdr=`ВЭД Интеллект · Поставка № ${v.no}\n${v.cargo}, ${v.volume} · ${v.from} → ${v.to}\nДата отчёта: ${fdate(today)} · демо-данные\n`;
+  if(k==='risk')return hdr+`\nВероятность хотя бы одного срыва: ${pct(sm.pAny)}\nОжидаемая стоимость срыва: ${rub(sm.E)}\n\nРиски:\n`+sm.R.map((x,i)=>`${i+1}. ${x.name} [${CATS[x.cat]}]\n   вероятность ${pct(x.pEff)}, потери ${rub(x.loss)}, ожидаемо ${rub(x.E)}${x.window?'\n   окно: '+x.window:''}${x.action?'\n   мера: '+x.action+(x.applied?' (принята)':''):''}`).join('\n')+`\n\nВероятности — сценарная оценка с явными допущениями.`;
+  if(k==='fin')return hdr+`\nСтоимость груза: ${rub(v.cargoValue)}\nПотери за сутки задержки: ${rub(sm.daily)}\n  простой транспорта ${rub(v.costs.vesselDay)}, хранение ${rub(v.costs.storageDay)}, капитал ${rub(finDay(v))}\nНеустойка: ${rub(v.costs.penaltyDay)}/сут после ${v.costs.graceDays} сут\n\nОжидаемая стоимость срыва: ${rub(sm.E)}\nПо категориям:\n`+Object.keys(CATS).filter(c=>sm.byCat[c]>0).map(c=>`  ${CATS[c]}: ${rub(sm.byCat[c])}`).join('\n')+`\n\nСценарии (затраты + риск):\n`+L.map(o=>`  ${o.best?'★ ':''}${o.name}: ${rub(o.total)} (затраты ${rub(o.certain)}, риск ${rub(o.risk)})`).join('\n');
+  const rec=sm.recs[0];
+  return hdr+`\nСтатус: ${LVL[sm.lvl]}\nСколько может стоить срыв: ${rs(sm.E)} ожидаемо, ${rs(sm.daily)} за каждые сутки задержки.\nНасколько вероятно: ${pct(sm.pAny)} (сценарная оценка).\nГлавная угроза: ${sm.R[0]?sm.R[0].name:'нет'}.\nЧто сделать сейчас: ${rec?rec.action+' — снизит ожидаемые потери на '+rs(rec.saving):'новых мер не требуется'}.\nЛучший сценарий по ожидаемым потерям: ${best.name} (${rs(best.total)}).\n\nРешение принимает ответственный за поставку.`;
+}
+
+function market(){
+  const caps=['Работа с данными ВЭД (товар, документы, контрагент)','Таможенные риски','Контроль маршрута','Прогнозирование рисков','Оценка финансовых последствий','Связь событий разных этапов поставки','Сценарное сравнение вариантов','Управленческие рекомендации','Единый цифровой профиль поставки'];
+  const M=[['yes','part','part'],['yes','no','no'],['part','yes','yes'],['part','yes','yes'],['part','part','part'],['part','yes','part'],['no','yes','part'],['part','part','part'],['part','yes','yes']];
+  const V=[['Альта-Софт','Таможенное оформление и ВЭД-риски',['Электронное декларирование','ТН ВЭД и таможенные платежи','Анализ ВЭД-рисков'],'Сильная таможенная часть, нет управления всей поставкой'],
+    ['Контур.Декларант','Электронное декларирование',['Подготовка деклараций','Расчёт платежей','Работа с брокерами'],'Не охватывает логистику и последствия срыва'],
+    ['ГосЛог','Государственная транспортно-логистическая платформа',['Электронные перевозочные документы','Обмен данными участников'],'Данные о перевозке, без оценки последствий для грузовладельца'],
+    ['ЕПЦС СМП (Росатом)','Цифровые сервисы Северного морского пути',['Безопасность и управление судоходством','Судно, трасса, документы'],'Не считает рубли для владельца груза'],
+    ['e2open','Глобальное управление цепочками поставок',['Импорт и экспорт','Работа с перевозчиками'],'Сложное внедрение, высокая стоимость'],
+    ['Everstream Analytics','Риск-аналитика цепочек поставок',['Мониторинг и уведомления','Прогноз рисков'],'Нет полного цикла внешнеторговой сделки'],
+    ['project44','Видимость и мониторинг перевозок',['Сквозная видимость','Прогноз ETA'],'Не анализирует таможенные и финансовые риски']];
+  return `<div class="ph"><div><h2>Рынок и позиционирование</h2><p class="lead">Существующие решения закрывают отдельные задачи. Наша ниша — перевести риск поставки в рубли для владельца груза и сравнить варианты действий.</p></div></div>
+  <div class="notice"><b>Оценка команды по открытым источникам, требует проверки.</b> У каждого решения может быть шире или уже набор функций в зависимости от продукта и конфигурации.</div>
+  <section class="card"><h3>Сравнение функциональных возможностей</h3><div class="tscroll"><table class="mx"><thead><tr><th>Возможность</th><th>Таможенные системы<br><span class="sub">оформление</span></th><th>Логистические системы<br><span class="sub">перевозки</span></th><th>Мониторинг перевозок<br><span class="sub">отслеживание</span></th><th class="us">ВЭД Интеллект</th></tr></thead><tbody>
+   ${caps.map((c,i)=>`<tr><td>${c}</td>${M[i].map(m=>`<td>${MARK[m]}</td>`).join('')}<td class="us">${MARK.yes}</td></tr>`).join('')}</tbody></table></div>
+   <div class="legend"><span>${MARK.yes} реализовано</span><span>${MARK.part} частично</span><span>${MARK.no} нет</span></div></section>
+  <section class="card"><h3>Кто уже есть на рынке</h3><div class="vendors">${V.map(([n,d,f,g])=>`<div class="vendor"><h4>${n}</h4><span class="sub">${d}</span><ul>${f.map(x=>`<li>${x}</li>`).join('')}</ul><div class="gap">${g}</div></div>`).join('')}</div></section>
+  <section class="card"><h3>Позиция относительно ЕПЦС и ГосЛога</h3><p class="lead">Государственные платформы покрывают судно, трассу и документы. Публичных сведений о рублёвой оценке последствий для грузовладельца нет. Мы не конкурируем с ними, а используем их данные там, где клиент сам даёт доступ. Прямой доступ к ГосЛогу в план не закладываем: правила доступа частных сервисов пока не подтверждены.</p></section>`;
+}
+
+const fld=(id,label,val,type,hint,attrs)=>`<div class="field"><label for="${id}">${label}</label><input id="${id}" type="${type||'text'}" value="${esc(val)}" ${attrs||''}>${hint?`<span class="hint">${hint}</span>`:''}</div>`;
+function settings(v){
+  const c=v.costs,A=S.A,f=(k,l,h)=>fld('c-'+k,l,c[k],'number',h,`data-c="${k}" min="0"`),a=(k,l,h,st)=>fld('a-'+k,l,A[k],'number',h,`data-a="${k}" min="0" step="${st||1}"`);
+  const pc=(st,i)=>`<input style="width:70px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card-2);text-align:center" type="number" min="0" max="100" id="p-${st}-${i}" data-p="${st}" data-i="${i}" value="${Math.round(A.probs[st][i]*100)}">`;
+  return `<div class="ph"><div><h2>Настройки</h2><p class="lead">Ставки и данные поставки № ${esc(v.no)} и сценарные допущения. Изменения сразу меняют оценку.</p></div></div>
+  <section class="card"><h3>Данные поставки</h3><div class="fgrid">
+    ${fld('v-no','Номер',v.no,'text','','data-k="no"')}${fld('v-cargo','Груз',v.cargo,'text','','data-k="cargo"')}${fld('v-volume','Объём',v.volume,'text','','data-k="volume"')}
+    ${fld('v-from','Откуда',v.from,'text','','data-k="from"')}${fld('v-to','Куда',v.to,'text','','data-k="to"')}${fld('v-value','Стоимость груза, ₽',v.cargoValue,'number','','data-k="cargoValue" data-num="1" min="0"')}
+    ${fld('v-start','Начало',v.start,'date','','data-k="start"')}${fld('v-end','Срок поставки',v.end,'date','','data-k="end"')}
+    ${v.type==='smp'?`${fld('v-name','Судно',v.name,'text','','data-k="name"')}${fld('v-entry','Дата входа в акваторию СМП',v.entry,'date','','data-k="entry"')}
+    <div class="field"><label for="v-ice">Ледовый класс</label><select id="v-ice" data-k="iceClass">${ICE.map(x=>`<option ${x===v.iceClass?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="field"><label for="v-cond">Ледовые условия</label><select id="v-cond" data-k="iceCond">${Object.entries(COND).map(([k,t])=>`<option value="${k}" ${k===v.iceCond?'selected':''}>${t}</option>`).join('')}</select><span class="hint">Демо-логика вместо таблиц из Правил</span></div>`:''}
+  </div></section>
+  <section class="card"><h3>Ставки и условия клиента</h3><p class="lead">Клиент вводит или подтверждает суммы сам. Рубли считаются от них, а не от средних по рынку.</p>
+   <div class="gt">Прямые потери</div><div class="fgrid">${f('vesselDay',v.type==='smp'?'Простой судна, ₽/сутки':'Простой транспорта, ₽/сутки')}${f('storageDay','Хранение груза, ₽/сутки')}${v.type==='smp'?f('replaceCost','Замена рейса, ₽')+f('extraLogistics','Доп. логистика при отказе, ₽')+f('customs','Таможенные доначисления, ₽'):''}</div>
+   <div class="gt">Косвенные потери</div><div class="fgrid">${f('penaltyDay','Неустойка покупателю, ₽/сутки')}${f('graceDays','Запас по контракту, сут')}${f('capitalRate','Стоимость капитала, % годовых')}${v.type==='smp'?f('lostProfit','Упущенная выгода при срыве, ₽'):''}</div>
+   ${v.type==='smp'?`<div class="gt">Параметры вариантов</div><div class="fgrid">${['urgentCost','Срочное оформление, ₽','shiftDays','Сдвиг даты входа, сут','altExtraDays','Альт. маршрут: доп. сутки','altExtraCost','Альт. маршрут: доп. фрахт, ₽'].reduce((s,x,i,arr)=>i%2?s:s+fld('o-'+x,arr[i+1],v.opt[x],'number','',`data-o="${x}" min="0"`),'')}</div>`:''}
+  </section>
+  ${v.type==='smp'?`<section class="card"><h3>Сценарные допущения СМП</h3><p class="lead">Общие для всех поставок. Каждое допущение названо и меняется вручную.</p><div class="fgrid">
+   ${a('delayDays','Задержка при срыве окна, сут')}${a('refuseShare','Доля срывов с отказом (0–1)','','0.05')}${a('refuseDays','Простой груза при замене рейса, сут')}${a('leadWorkDays','Подача заявления до входа, раб. дней','Сверить с Правилами плавания')}${a('permitBuffer','Запас на получение разрешения, сут')}${a('urgentFactor','Множитель риска при срочном оформлении','','0.05')}${a('altP','Риск задержки на альт. маршруте (0–1)','','0.01')}</div>
+   <div class="gt">Вероятность срыва по пункту, %</div><div class="tscroll"><table class="mx"><thead><tr><th>Статус</th><th>10+ дней до срока</th><th>3–9 дней</th><th>0–2 дня</th><th>срок прошёл</th></tr></thead>
+   <tbody><tr><td>В работе</td>${[0,1,2,3].map(i=>`<td>${pc('work',i)}</td>`).join('')}</tr><tr><td>Нет</td>${[0,1,2,3].map(i=>`<td>${pc('none',i)}</td>`).join('')}</tr></tbody></table></div>
+   <div class="row"><button class="btn" type="button" data-act="resetA">Вернуть допущения по умолчанию</button></div></section>`:''}
+  <section class="card"><h3>Демо</h3><p class="lead">Изменения хранятся только в этом браузере.</p><div class="row"><button class="btn" type="button" data-act="resetAll">Восстановить демо-данные</button></div></section>`;
+}
+
+function newShip(){
+  return `<div class="ph"><div><h2>Новая поставка</h2><p class="lead">Укажите основное. Ставки и риски можно уточнить после создания.</p></div></div>
+  <form class="card" id="newForm"><div class="fgrid">
+   <div class="field"><label for="n-type">Тип</label><select id="n-type"><option value="regular">Обычная поставка</option><option value="smp">Рейс по СМП</option></select></div>
+   ${fld('n-no','Номер','ES-2026-'+String(Math.floor(Math.random()*900+100)))}${fld('n-cargo','Груз','Промышленное оборудование')}${fld('n-volume','Объём','1 × 40HC')}
+   ${fld('n-from','Откуда','Нинбо')}${fld('n-to','Куда','Екатеринбург')}${fld('n-value','Стоимость груза, ₽','40000000','number')}
+   ${fld('n-end','Срок поставки',iso(addDays(today,35)),'date')}${fld('n-entry','Дата входа в СМП (для рейса СМП)',iso(addDays(today,40)),'date')}
+  </div><div class="row"><button class="btn pri" type="submit">Создать поставку</button><button class="btn" type="button" data-page="ship">Отмена</button></div></form>`;
+}
+
+/* ============ действия ============ */
+function applyRisk(v,rid,on){
+  if(rid==='smp-doc'){v.urgentApplied=on}else{const r=(v.risks||[]).find(x=>x.id===rid);if(!r)return;r.applied=on}
+  const name=rid==='smp-doc'?'Срочное оформление документов СМП':(v.risks.find(x=>x.id===rid)||{}).action;
+  v.events.push({date:iso(today),text:(on?'Принята мера: ':'Отменена мера: ')+name});
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,tr[data-open]');if(!t)return;
+  if(t.dataset.case){S.caseId=t.dataset.case;go('caseStudy');return}
+  if(t.dataset.open){S.selected=t.dataset.open;go('card');return}
+  if(t.dataset.page){go(t.dataset.page);return}
+  const a=t.dataset.act,v=cur();if(!a)return;
+  if(a==='apply'||a==='unapply'){const tv=t.dataset.vid?S.voyages.find(x=>x.id===t.dataset.vid):v;applyRisk(tv,t.dataset.rid,a==='apply');save();render();toast(a==='apply'?'Мера принята, оценка пересчитана':'Мера отменена');return}
+  if(a==='item'){v.items[t.dataset.item]=t.dataset.status;if(t.dataset.item==='app'&&t.dataset.status==='none')v.items.permit='none';save();render();return}
+  if(a==='stage'){v.stage=Math.max(0,Math.min(4,v.stage+ +t.dataset.d));v.pos=Math.min(v.nodes.length-1,Math.round(v.stage/4*(v.nodes.length-1)));v.events.push({date:iso(today),text:'Этап: '+STAGES[v.type][v.stage]});save();render();return}
+  if(a==='del'){t.outerHTML='<span class="row">Удалить поставку? <button class="btn pri" type="button" data-act="delYes">Удалить</button><button class="btn" type="button" data-page="card">Отмена</button></span>';return}
+  if(a==='delYes'){S.voyages=S.voyages.filter(x=>x.id!==S.selected);S.selected=S.voyages[0]?.id||null;go('ship');toast('Поставка удалена');return}
+  if(a==='new'){go('newShip');return}
+  if(a==='rf'){S.riskFilter=t.dataset.k;save();render();return}
+  if(a==='report'){S.report=t.dataset.k;go('docs');return}
+  if(a==='copy'){copy($('#rep').textContent);return}
+  if(a==='resetA'){S.A=clone(DEFAULT_A);save();render();toast('Допущения сброшены');return}
+  if(a==='resetAll'){S=seed();S.selected=S.voyages[0].id;save();render();toast('Демо-данные восстановлены');return}
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='shipSel'){S.selected=el.value;save();render();return}
+  if(el.dataset.opt){cur().opt[el.dataset.opt]=Math.max(0,parseFloat(el.value)||0);save();render();return}
+  if(el.tagName==='SELECT'&&el.dataset.k){cur()[el.dataset.k]=el.value;save();renderNav();}
+});
+document.addEventListener('input',e=>{
+  const el=e.target,v=cur();if(!v||!el.closest('#page')||el.closest('#newForm'))return;
+  const num=x=>Math.max(0,parseFloat(x)||0);
+  if(el.dataset.k&&el.tagName!=='SELECT')v[el.dataset.k]=el.dataset.num?num(el.value):el.value;
+  else if(el.dataset.c)v.costs[el.dataset.c]=num(el.value);
+  else if(el.dataset.o)v.opt[el.dataset.o]=num(el.value);
+  else if(el.dataset.a)S.A[el.dataset.a]=num(el.value);
+  else if(el.dataset.p)S.A.probs[el.dataset.p][+el.dataset.i]=Math.min(100,num(el.value))/100;
+  else return;
+  save();if(['no','from','to'].includes(el.dataset.k))renderNav();
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='newForm')return;e.preventDefault();
+  const g=id=>document.getElementById(id).value,type=g('n-type'),from=g('n-from')||'Порт А',to=g('n-to')||'Пункт Б';
+  const v={id:uid(),no:g('n-no'),type,name:type==='smp'?'т/х «Новое судно»':g('n-cargo'),cargo:g('n-cargo'),volume:g('n-volume'),from,to,start:iso(today),end:g('n-end'),
+    cargoValue:Math.max(0,parseFloat(g('n-value'))||0),stage:0,pos:0,events:[{date:iso(today),text:'Поставка создана'}],
+    costs:type==='smp'?{vesselDay:1000000,storageDay:100000,penaltyDay:500000,graceDays:5,replaceCost:25000000,extraLogistics:3000000,customs:0,lostProfit:10000000,capitalRate:18}
+      :{vesselDay:40000,storageDay:15000,penaltyDay:100000,graceDays:3,replaceCost:0,extraLogistics:0,customs:0,lostProfit:0,capitalRate:18},
+    nodes:type==='smp'?[[from,80,200],['Карские Ворота',185,160],['Диксон',300,128],[to,520,110]]:[[from,610,252],['Перевалка',540,190],[to,90,212]]};
+  if(type==='smp')Object.assign(v,{entry:g('n-entry'),iceClass:'Arc5',iceCond:'medium',items:{app:'none',insurance:'none',escort:'none',permit:'none'},opt:{shiftDays:7,urgentCost:400000,altExtraDays:0,altExtraCost:0},risks:[]});
+  else{const val=v.cargoValue;Object.assign(v,{routeText:from+' → '+to,scenarios:[],risks:[
+    {id:uid(),name:'Классификация товара по ТН ВЭД',cat:'customs',p:0.25,direct:Math.round(val*0.04),indirect:Math.round(val*0.01),window:'при выпуске',action:'Проверить классификацию у брокера',actionCost:60000,pAfter:0.08},
+    {id:uid(),name:'Задержка в порту перевалки',cat:'transport',p:0.25,direct:300000,indirect:200000,window:'в пути',action:'Забронировать вывоз с терминала',actionCost:40000,pAfter:0.12},
+    {id:uid(),name:'Срыв срока поставки покупателю',cat:'time',p:0.2,direct:0,indirect:Math.round(val*0.03),window:'к '+fdate(parse(g('n-end'))),action:'Согласовать окно поставки',actionCost:0,pAfter:0.1}]})}
+  S.voyages.push(v);S.selected=v.id;go('card');toast('Поставка создана');
+});
+function copy(txt){const ok=()=>toast('Скопировано');try{navigator.clipboard.writeText(txt).then(ok,()=>fb(txt))}catch(e){fb(txt)}}
+function fb(txt){const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let r=false;try{r=document.execCommand('copy')}catch(e){}ta.remove();toast(r?'Скопировано':'Выделите текст и скопируйте вручную')}
+let tt;function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,2200)}
+render();
+})();
+</script>
+
+</body>
+</html>
